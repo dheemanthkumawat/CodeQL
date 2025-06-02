@@ -1,0 +1,44 @@
+name: "CodeQL Security Scan"
+
+# ─── REQUIRED PERMISSIONS ─────────────────────────────────────────────────────
+permissions:
+  contents: read
+  security-events: write
+
+# ─── WHEN TO RUN ────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  codeql-analysis:
+    name: Analyze with CodeQL
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        language: [ 'python' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Setup project (no build needed)
+        run: echo "No build step needed for Python-only repo."
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v2
