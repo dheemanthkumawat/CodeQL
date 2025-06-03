@@ -1,58 +1,40 @@
-name: "CodeQL Security Scan"
+name: "CodeQL Analysis"
 
-########################################################################
-# ─── REQUIRED PERMISSIONS ──────────────────────────────────────────────
-# Public repositories get free CodeQL scanning, but you still need
-# to give the GITHUB_TOKEN the right scopes for uploading results.
-permissions:
-  contents: read          # needed to check out code
-  security-events: write  # needed to upload SARIF/code-scanning results
-########################################################################
-
-# ─── WHEN TO RUN ───────────────────────────────────────────────────────
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  codeql-analysis:
-    name: Analyze with CodeQL
+  analyze:
+    name: Perform CodeQL Analysis
     runs-on: ubuntu-latest
 
+    permissions:
+      actions: read
+      contents: read
+      security-events: write  # needed to upload SARIF
+
     strategy:
+      fail-fast: false
       matrix:
-        language: [ 'python' ]
+        language: [ "python" ]
 
     steps:
-      # 1) Check out your code
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      # 2) Initialize CodeQL (now using @v3)
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          # (You can add `queries: ./my-custom-queries` here if you ever write your own .ql packs.)
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        # If you have private dependencies, you can configure credentials here.
+        # For most private repos you can leave this empty.
 
-      # 3) (Optional) Install dependencies so CodeQL can fully resolve imports.
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
+    - name: Build (no build needed for a simple Python repo)
+      run: echo "Skip build (pure Python)."
 
-      # 4) (No build step needed for a pure-Python repo; adjust if you do have build steps.)
-      - name: No-op build step
-        run: echo "Nothing to build for pure‐Python repository."
-
-      # 5) Run CodeQL analysis (using @v3). If there are zero .py files, this can fail with exit code 32.
-      #    We use `continue-on-error: true` so that an empty repo (README only) does not break the entire workflow.
-      - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v3
-        continue-on-error: true
-
-      # (You could add more steps here, e.g. uploading custom SARIF or notifying Slack, etc.)
+    - name: Perform CodeQL analysis
+      uses: github/codeql-action/analyze@v3
