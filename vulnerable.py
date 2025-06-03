@@ -1,8 +1,9 @@
-# simple_eval_demo.py
+import os
 
-def calculate_expression(expr: str) -> float:
-    return eval(expr)  # ← CodeQL will flag this every time
+def read_file(filename):
+    # Vulnerable to command injection if `filename` contains shell metacharacters.
+    os.system(f"cat {filename}")
 
 if __name__ == "__main__":
-    user_input = input("Enter a Python expression: ")
-    print(calculate_expression(user_input))
+    filename = input("Enter the filename to read: ")
+    read_file(filename)
